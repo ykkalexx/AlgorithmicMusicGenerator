@@ -9,35 +9,166 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { moods } from "@/constants/constants";
+import * as Tone from "tone";
+
+type SynthType = Tone.Synth | Tone.Sampler | Tone.FMSynth | Tone.MonoSynth;
+type SequenceType = Tone.Sequence<string>;
+
+interface InstrumentConfig {
+  name: string;
+  create: () => SynthType;
+}
+
+interface InstrumentsDict {
+  [key: string]: InstrumentConfig;
+}
 
 const MusicGenerator = () => {
   const [mood, setMood] = useState("happy");
   const [tempo, setTempo] = useState(120);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState("synth");
+  const [synth, setSynth] = useState<SynthType | null>(null);
+  const [sequence, setSequence] = useState<SequenceType | null>(null);
 
-  const moods = [
-    { value: "happy", label: "Happy" },
-    { value: "sad", label: "Sad" },
-    { value: "energetic", label: "Energetic" },
-    { value: "calm", label: "Calm" },
-    { value: "mysterious", label: "Mysterious" },
-  ];
+  const instruments: InstrumentsDict = {
+    synth: {
+      name: "Synthesizer",
+      create: () =>
+        new Tone.Synth({
+          oscillator: { type: "triangle" },
+          envelope: {
+            attack: 0.1,
+            decay: 0.2,
+            sustain: 0.3,
+            release: 0.8,
+          },
+        }).toDestination(),
+    },
+    piano: {
+      name: "Piano",
+      create: () =>
+        new Tone.Sampler({
+          urls: {
+            C4: "C4.mp3",
+          },
+          baseUrl: "/piano-samples/",
+        }).toDestination(),
+    },
+    strings: {
+      name: "Strings",
+      create: () =>
+        new Tone.FMSynth({
+          harmonicity: 3,
+          modulationIndex: 10,
+          envelope: {
+            attack: 0.2,
+            decay: 0.3,
+            sustain: 0.4,
+            release: 1,
+          },
+        }).toDestination(),
+    },
+    bass: {
+      name: "Bass",
+      create: () =>
+        new Tone.MonoSynth({
+          oscillator: { type: "square" },
+          envelope: {
+            attack: 0.1,
+            decay: 0.3,
+            sustain: 0.4,
+            release: 0.8,
+          },
+        }).toDestination(),
+    },
+  };
 
-  const instruments = [
-    { value: "synth", label: "Synthesizer" },
-    { value: "piano", label: "Piano" },
-    { value: "strings", label: "Strings" },
-    { value: "bass", label: "Bass" },
-  ];
+  // init tonejs and synth
+  useEffect(() => {
+    const newSynth = instruments[selectedInstrument].create();
+    setSynth(newSynth);
+
+    return () => {
+      if (synth) {
+        synth.dispose();
+      }
+    };
+  }, [selectedInstrument]);
+
+  useEffect(() => {
+    Tone.Transport.bpm.value = tempo;
+  }, [tempo]);
+
+  const generateMusicSequence = (currentMood: string) => {
+    const currentScale =
+      moods.find((m) => m.value === currentMood)?.scale || [];
+    const noteLength = "8n";
+
+    if (sequence && "dispose" in sequence) {
+      sequence.dispose();
+    }
+
+    const newSequence = new Tone.Sequence<string>(
+      (time, note) => {
+        if (synth && "triggerAttackRelease" in synth) {
+          synth.triggerAttackRelease(note, noteLength, time);
+        }
+      },
+      generateMelody(currentScale),
+      noteLength
+    );
+
+    setSequence(newSequence);
+    return newSequence;
+  };
+
+  const generateMelody = (scale: string[]) => {
+    const melodyLength = 8;
+    const melody = [];
+
+    for (let i = 0; i < melodyLength; i++) {
+      const randomIndex = Math.floor(Math.random() * scale.length);
+      melody.push(scale[randomIndex]);
+    }
+
+    return melody;
+  };
+
+  const handlePlay = async () => {
+    await Tone.start();
+
+    if (!isPlaying) {
+      const newSequence = generateMusicSequence(mood);
+      Tone.Transport.start();
+      newSequence.start(0);
+    } else {
+      Tone.Transport.stop();
+      if (sequence) {
+        sequence.stop();
+      }
+    }
+
+    setIsPlaying(!isPlaying);
+  };
 
   const handleTempoChange = (value: number[]) => {
     setTempo(value[0]);
   };
 
-  const handlePlay = () => {
-    setIsPlaying(!isPlaying);
-    // Tone.js will be used here
+  const handleInstrumentChange = (value: string) => {
+    if (isPlaying) {
+      handlePlay(); // Stop playing before changing instrument
+    }
+    setSelectedInstrument(value);
+  };
+
+  const handleMoodChange = (value: string) => {
+    if (isPlaying) {
+      handlePlay(); // Stop playing before changing mood
+    }
+    setMood(value);
   };
 
   const handleSave = () => {
@@ -71,15 +202,15 @@ const MusicGenerator = () => {
           <label className="text-sm font-medium">Instrument</label>
           <Select
             value={selectedInstrument}
-            onValueChange={setSelectedInstrument}
+            onValueChange={handleInstrumentChange}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select instrument" />
             </SelectTrigger>
             <SelectContent>
-              {instruments.map((inst) => (
-                <SelectItem key={inst.value} value={inst.value}>
-                  {inst.label}
+              {Object.entries(instruments).map(([value, inst]) => (
+                <SelectItem key={value} value={value}>
+                  {inst.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -109,10 +240,10 @@ const MusicGenerator = () => {
           >
             {isPlaying ? "Stop" : "Play"}
           </Button>
-          <Button onClick={handleSave} className="w-32">
+          <Button onClick={() => {}} className="w-32">
             Save
           </Button>
-          <Button onClick={handleExport} className="w-32">
+          <Button onClick={() => {}} className="w-32">
             Export
           </Button>
         </div>
