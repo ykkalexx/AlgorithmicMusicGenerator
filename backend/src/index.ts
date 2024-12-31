@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { dbConnection } from "./config/database";
 import cookieParser from "cookie-parser";
+import { router } from "./routes/routes";
 
 dotenv.config();
 
@@ -12,6 +13,8 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
+
+app.use("/api", router);
 
 // route to check the health of the server
 app.get("/health", (req, res) => {

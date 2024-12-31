@@ -1,3 +1,5 @@
+import { RowDataPacket, OkPacket } from "mysql2";
+
 export interface Composition {
   id: number;
   userId: string;
@@ -10,7 +12,7 @@ export interface Composition {
   updatedAt: Date;
 }
 
-export interface User {
+export interface User extends RowDataPacket {
   id: string;
   sessionId: string;
   createdAt: Date;
