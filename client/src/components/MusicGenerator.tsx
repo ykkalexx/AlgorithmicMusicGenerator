@@ -13,8 +13,17 @@ import {
 
 import { SynthType, MoodKey, MusicEvent } from "@/types/types";
 import { MOODS, INSTRUMENTS } from "@/constants/constants";
-import { generateMelody } from "@/musicUtils/musicUtils";
+import { MelodyGenerator } from "@/utils/melodyGenerator";
 import { saveComposition } from "@/services/api";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 const MusicGenerator: React.FC = () => {
   const [mood, setMood] = useState<MoodKey>("happy");
@@ -23,6 +32,8 @@ const MusicGenerator: React.FC = () => {
   const [selectedInstrument, setSelectedInstrument] = useState("synth");
   const [synth, setSynth] = useState<SynthType | null>(null);
   const [sequence, setSequence] = useState<Tone.Part<MusicEvent> | null>(null);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [compositionName, setCompositionName] = useState("");
 
   // Initialize synth when instrument changes
   useEffect(() => {
@@ -44,14 +55,16 @@ const MusicGenerator: React.FC = () => {
   const generateMusicSequence = (
     currentMood: MoodKey
   ): Tone.Part<MusicEvent> => {
-    const currentScale =
-      MOODS.find((m) => m.value === currentMood)?.scale || [];
-
     if (sequence) {
       sequence.dispose();
     }
 
-    const events = generateMelody(currentScale, currentMood);
+    // Create melody generator instance
+    const generator = new MelodyGenerator(currentMood);
+
+    // Generate melody events using the class
+    const events = generator.generateMelody();
+
     const melodyPart = new Tone.Part((time: number, event: MusicEvent) => {
       if (!synth?.triggerAttackRelease) return;
 
@@ -80,7 +93,6 @@ const MusicGenerator: React.FC = () => {
     setSequence(melodyPart);
     return melodyPart;
   };
-
   const handlePlay = async () => {
     await Tone.start();
 
@@ -114,17 +126,22 @@ const MusicGenerator: React.FC = () => {
     setMood(value as MoodKey);
   };
 
+  // Add save handler
   const handleSave = async () => {
     try {
       await saveComposition({
-        name: "Random Name",
+        name: compositionName,
         mood: mood,
         tempo: tempo,
         instrument: selectedInstrument,
         melody: sequence ? JSON.stringify(event) : "",
       });
+      setShowSaveDialog(false);
+      setCompositionName("");
+      // Optional: Show success message
     } catch (error) {
       console.error("Failed to save composition:", error);
+      // Optional: Show error message
     }
   };
 
@@ -189,9 +206,37 @@ const MusicGenerator: React.FC = () => {
           >
             {isPlaying ? "Stop" : "Play"}
           </Button>
-          <Button onClick={handleSave} className="w-32">
-            Save
-          </Button>
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button onClick={() => setShowSaveDialog(true)} className="w-32">
+                Save
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Save Composition</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  placeholder="Composition name"
+                  value={compositionName}
+                  //@ts-ignore
+                  onChange={(e: string) => setCompositionName(e.target.value)}
+                />
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowSaveDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSave}>Save</Button>
+                </DialogFooter>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <Button className="w-32">Export</Button>
         </div>
       </CardContent>

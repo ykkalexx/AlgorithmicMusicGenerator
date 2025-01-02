@@ -64,16 +64,6 @@ export const INSTRUMENTS: InstrumentsDict = {
         },
       }).toDestination(),
   },
-  piano: {
-    name: "Piano",
-    create: () =>
-      new Tone.Sampler({
-        urls: {
-          C4: "C4.mp3",
-        },
-        baseUrl: "/piano-samples/",
-      }).toDestination(),
-  },
   strings: {
     name: "Strings",
     create: () =>
