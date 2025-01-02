@@ -14,6 +14,7 @@ import {
 import { SynthType, MoodKey, MusicEvent } from "@/types/types";
 import { MOODS, INSTRUMENTS } from "@/constants/constants";
 import { generateMelody } from "@/musicUtils/musicUtils";
+import { saveComposition } from "@/services/api";
 
 const MusicGenerator: React.FC = () => {
   const [mood, setMood] = useState<MoodKey>("happy");
@@ -113,6 +114,20 @@ const MusicGenerator: React.FC = () => {
     setMood(value as MoodKey);
   };
 
+  const handleSave = async () => {
+    try {
+      await saveComposition({
+        name: "Random Name",
+        mood: mood,
+        tempo: tempo,
+        instrument: selectedInstrument,
+        melody: sequence ? JSON.stringify(event) : "",
+      });
+    } catch (error) {
+      console.error("Failed to save composition:", error);
+    }
+  };
+
   return (
     <Card className="w-full max-w-2xl p-6 mx-auto mt-8">
       <CardContent className="space-y-6">
@@ -174,7 +189,9 @@ const MusicGenerator: React.FC = () => {
           >
             {isPlaying ? "Stop" : "Play"}
           </Button>
-          <Button className="w-32">Save</Button>
+          <Button onClick={handleSave} className="w-32">
+            Save
+          </Button>
           <Button className="w-32">Export</Button>
         </div>
       </CardContent>
