@@ -10,7 +10,15 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -23,7 +31,9 @@ app.get("/health", (req, res) => {
 
 const startServer = async () => {
   try {
-    await dbConnection.connect();
+    // Test database connection using the pool
+    const connection = await dbConnection.getConnection();
+    connection.release();
     console.log("Connected to MySQL database");
 
     app.listen(PORT, () => {
