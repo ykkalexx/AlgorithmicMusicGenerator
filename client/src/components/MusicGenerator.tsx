@@ -15,6 +15,15 @@ import { SynthType, MoodKey, MusicEvent } from "@/types/types";
 import { MOODS, INSTRUMENTS } from "@/constants/constants";
 import { MelodyGenerator } from "@/utils/melodyGenerator";
 import { saveComposition } from "@/services/api";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 const MusicGenerator: React.FC = () => {
   const [mood, setMood] = useState<MoodKey>("happy");
@@ -197,9 +206,37 @@ const MusicGenerator: React.FC = () => {
           >
             {isPlaying ? "Stop" : "Play"}
           </Button>
-          <Button onClick={handleSave} className="w-32">
-            Save
-          </Button>
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button onClick={() => setShowSaveDialog(true)} className="w-32">
+                Save
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Save Composition</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  placeholder="Composition name"
+                  value={compositionName}
+                  //@ts-ignore
+                  onChange={(e: string) => setCompositionName(e.target.value)}
+                />
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowSaveDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSave}>Save</Button>
+                </DialogFooter>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           <Button className="w-32">Export</Button>
         </div>
       </CardContent>
