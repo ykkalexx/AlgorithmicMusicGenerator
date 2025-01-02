@@ -13,7 +13,7 @@ import {
 
 import { SynthType, MoodKey, MusicEvent } from "@/types/types";
 import { MOODS, INSTRUMENTS } from "@/constants/constants";
-import { generateMelody } from "@/musicUtils/musicUtils";
+import { MelodyGenerator } from "@/utils/melodyGenerator";
 import { saveComposition } from "@/services/api";
 
 const MusicGenerator: React.FC = () => {
@@ -23,6 +23,8 @@ const MusicGenerator: React.FC = () => {
   const [selectedInstrument, setSelectedInstrument] = useState("synth");
   const [synth, setSynth] = useState<SynthType | null>(null);
   const [sequence, setSequence] = useState<Tone.Part<MusicEvent> | null>(null);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [compositionName, setCompositionName] = useState("");
 
   // Initialize synth when instrument changes
   useEffect(() => {
@@ -44,14 +46,16 @@ const MusicGenerator: React.FC = () => {
   const generateMusicSequence = (
     currentMood: MoodKey
   ): Tone.Part<MusicEvent> => {
-    const currentScale =
-      MOODS.find((m) => m.value === currentMood)?.scale || [];
-
     if (sequence) {
       sequence.dispose();
     }
 
-    const events = generateMelody(currentScale, currentMood);
+    // Create melody generator instance
+    const generator = new MelodyGenerator(currentMood);
+
+    // Generate melody events using the class
+    const events = generator.generateMelody();
+
     const melodyPart = new Tone.Part((time: number, event: MusicEvent) => {
       if (!synth?.triggerAttackRelease) return;
 
@@ -80,7 +84,6 @@ const MusicGenerator: React.FC = () => {
     setSequence(melodyPart);
     return melodyPart;
   };
-
   const handlePlay = async () => {
     await Tone.start();
 
@@ -114,17 +117,22 @@ const MusicGenerator: React.FC = () => {
     setMood(value as MoodKey);
   };
 
+  // Add save handler
   const handleSave = async () => {
     try {
       await saveComposition({
-        name: "Random Name",
+        name: compositionName,
         mood: mood,
         tempo: tempo,
         instrument: selectedInstrument,
         melody: sequence ? JSON.stringify(event) : "",
       });
+      setShowSaveDialog(false);
+      setCompositionName("");
+      // Optional: Show success message
     } catch (error) {
       console.error("Failed to save composition:", error);
+      // Optional: Show error message
     }
   };
 

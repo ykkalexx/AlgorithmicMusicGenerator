@@ -1,19 +1,13 @@
 import * as Tone from "tone";
 import { MOODS, SCALES, generateNoteInScale } from "./musicTheory";
-
-interface MelodyNote {
-  note: string | string[];
-  duration: string;
-  time: number;
-  velocity: number;
-}
+import { MoodKey, MusicEvent } from "@/types/types";
 
 export class MelodyGenerator {
-  private mood: string;
+  private mood: MoodKey;
   private octave: number;
   private rootNote: string;
 
-  constructor(mood: string, octave = 4, rootNote = "C") {
+  constructor(mood: MoodKey, octave = 4, rootNote = "C") {
     this.mood = mood;
     this.octave = octave;
     this.rootNote = rootNote;
@@ -24,13 +18,12 @@ export class MelodyGenerator {
   }
 
   private getScaleNotes(): string[] {
-    const moodConfig = MOODS[this.mood as keyof typeof MOODS];
+    const moodConfig = MOODS[this.mood];
     const scale = SCALES[moodConfig.scale as keyof typeof SCALES];
     return generateNoteInScale(this.rootNote, scale, this.octave);
   }
 
   private generateChord(degree: number, scale: string[]): string[] {
-    // Create triads (1-3-5)
     const root = scale[(degree - 1) % scale.length];
     const third = scale[(degree + 1) % scale.length];
     const fifth = scale[(degree + 3) % scale.length];
@@ -39,16 +32,13 @@ export class MelodyGenerator {
 
   private createMelodyPattern(scale: string[], length: number): string[] {
     const pattern: string[] = [];
-    const moodConfig = MOODS[this.mood as keyof typeof MOODS];
+    const moodConfig = MOODS[this.mood];
 
     for (let i = 0; i < length; i++) {
-      // Use weighted random selection based on mood
       if (Math.random() < 0.3) {
-        // Use chord tones more frequently
         const chordTones = this.generateChord(1, scale);
         pattern.push(this.getRandomFromArray(chordTones));
       } else {
-        // Use scale tones
         pattern.push(this.getRandomFromArray(scale));
       }
     }
@@ -56,21 +46,18 @@ export class MelodyGenerator {
     return pattern;
   }
 
-  generateMelody(): MelodyNote[] {
-    const moodConfig = MOODS[this.mood as keyof typeof MOODS];
+  generateMelody(): MusicEvent[] {
+    const moodConfig = MOODS[this.mood];
     const scale = this.getScaleNotes();
-    const melody: MelodyNote[] = [];
+    const melody: MusicEvent[] = [];
     let currentTime = 0;
 
-    // Get random chord progression and rhythm pattern for this mood
     const chordProgression = this.getRandomFromArray(
       moodConfig.chordProgressions
     );
     const rhythmPattern = this.getRandomFromArray(moodConfig.rhythmPatterns);
 
-    // Generate for each chord in the progression
     chordProgression.forEach((degree) => {
-      // Add the chord
       const chord = this.generateChord(degree, scale);
       melody.push({
         note: chord,
@@ -79,7 +66,6 @@ export class MelodyGenerator {
         velocity: this.getRandomFromArray([0.7, 0.75, 0.8]),
       });
 
-      // Add melodic pattern over the chord
       const melodyPattern = this.createMelodyPattern(scale, 4);
       melodyPattern.forEach((note, index) => {
         const rhythmValue = rhythmPattern[index % rhythmPattern.length];
@@ -102,11 +88,9 @@ export class MelodyGenerator {
     return melody;
   }
 
-  // Add variation to an existing melody
-  addVariation(originalMelody: MelodyNote[]): MelodyNote[] {
+  addVariation(originalMelody: MusicEvent[]): MusicEvent[] {
     return originalMelody.map((note) => {
       if (Math.random() < 0.3) {
-        // 30% chance of variation
         const scale = this.getScaleNotes();
         return {
           ...note,
