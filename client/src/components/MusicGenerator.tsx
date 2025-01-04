@@ -24,6 +24,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { exportToWave } from "@/utils/export";
 
 const MusicGenerator: React.FC = () => {
   const [mood, setMood] = useState<MoodKey>("happy");
@@ -34,6 +35,7 @@ const MusicGenerator: React.FC = () => {
   const [sequence, setSequence] = useState<Tone.Part<MusicEvent> | null>(null);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [compositionName, setCompositionName] = useState("");
+  const [exporting, isExporting] = useState(false);
 
   // Initialize synth when instrument changes
   useEffect(() => {
@@ -145,6 +147,22 @@ const MusicGenerator: React.FC = () => {
     }
   };
 
+  const handleExport = async () => {
+    isExporting(true);
+    try {
+      console.log("hit1");
+      //@ts-ignore
+      const events = sequence?.events?.map((e) => e.event as MusicEvent) || [];
+      console.log("hit2");
+      exportToWave(events, synth as Tone.Synth, 10);
+      console.log("hit3");
+    } catch (error) {
+      console.error("Failed to export composition:", error);
+    } finally {
+      isExporting(false);
+    }
+  };
+
   return (
     <Card className="w-full max-w-2xl p-6 mx-auto mt-8">
       <CardContent className="space-y-6">
@@ -237,7 +255,9 @@ const MusicGenerator: React.FC = () => {
             </DialogContent>
           </Dialog>
 
-          <Button className="w-32">Export</Button>
+          <Button onClick={handleExport} className="w-32">
+            {exporting ? "Exporting..." : "Export"}
+          </Button>
         </div>
       </CardContent>
     </Card>
