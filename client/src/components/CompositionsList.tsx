@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { deleteComposition, getUserCompositions } from "@/services/api";
+import {
+  deleteComposition,
+  getComposition,
+  getUserCompositions,
+} from "@/services/api";
 import { Composition } from "@/types/types";
 
 const CompositionsList = () => {
@@ -29,6 +33,19 @@ const CompositionsList = () => {
       setComposition(composition.filter((comp) => comp.id !== id));
     } catch (error) {
       console.error("Failed to delete composition:", error);
+    }
+  };
+
+  const handleLoad = async (id: number) => {
+    try {
+      const loadedComposition = await getComposition(id);
+      setComposition((prevCompositions) =>
+        prevCompositions.map((comp) =>
+          comp.id === id ? loadedComposition : comp
+        )
+      );
+    } catch (error) {
+      console.error("Failed to load composition:", error);
     }
   };
 
@@ -60,7 +77,11 @@ const CompositionsList = () => {
                 </p>
               </div>
               <div className="flex space-x-2">
-                <Button variant="outline" onClick={() => {}} className="w-24">
+                <Button
+                  variant="outline"
+                  onClick={() => handleLoad(composition.id)}
+                  className="w-24"
+                >
                   Load
                 </Button>
                 <Button
