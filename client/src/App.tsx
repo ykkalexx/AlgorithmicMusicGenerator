@@ -15,8 +15,10 @@ function App() {
   return (
     <div className="flex flex-col items-center justify-center w-full h-full gap-5 p-6">
       <Title />
-      <MusicGenerator loadedComposition={loadedComposition} />
-      <CompositionsList onLoad={handleLoadComposition} />
+      <div className="flex flex-row gap-[300px] justify-between">
+        <CompositionsList onLoad={handleLoadComposition} />
+        <MusicGenerator loadedComposition={loadedComposition} />
+      </div>
     </div>
   );
 }

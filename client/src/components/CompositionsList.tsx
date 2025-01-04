@@ -54,7 +54,7 @@ const CompositionsList = ({ onLoad }: Props) => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-[600px]">
       <h2 className="mb-4 text-2xl font-bold">Your Compositions</h2>
       {composition.length === 0 ? (
         <p className="text-center text-gray-500">No compositions saved yet</p>
