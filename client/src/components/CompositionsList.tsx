@@ -8,7 +8,11 @@ import {
 } from "@/services/api";
 import { Composition } from "@/types/types";
 
-const CompositionsList = () => {
+interface Props {
+  onLoad: (composition: Composition) => void;
+}
+
+const CompositionsList = ({ onLoad }: Props) => {
   const [composition, setComposition] = useState<Composition[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,11 +43,7 @@ const CompositionsList = () => {
   const handleLoad = async (id: number) => {
     try {
       const loadedComposition = await getComposition(id);
-      setComposition((prevCompositions) =>
-        prevCompositions.map((comp) =>
-          comp.id === id ? loadedComposition : comp
-        )
-      );
+      onLoad(loadedComposition);
     } catch (error) {
       console.error("Failed to load composition:", error);
     }
