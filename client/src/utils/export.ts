@@ -1,7 +1,7 @@
 import * as Tone from "tone";
 import { MusicEvent } from "@/types/types";
 
-export const exportToWav = async (
+export const exportToWave = async (
   events: MusicEvent[],
   synth: Tone.Synth | null,
   duration: number
