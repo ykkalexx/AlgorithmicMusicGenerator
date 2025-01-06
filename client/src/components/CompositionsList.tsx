@@ -1,10 +1,18 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { deleteComposition, getUserCompositions } from "@/services/api";
+import {
+  deleteComposition,
+  getComposition,
+  getUserCompositions,
+} from "@/services/api";
 import { Composition } from "@/types/types";
 
-const CompositionsList = () => {
+interface Props {
+  onLoad: (composition: Composition) => void;
+}
+
+const CompositionsList = ({ onLoad }: Props) => {
   const [composition, setComposition] = useState<Composition[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,12 +40,21 @@ const CompositionsList = () => {
     }
   };
 
+  const handleLoad = async (id: number) => {
+    try {
+      const loadedComposition = await getComposition(id);
+      onLoad(loadedComposition);
+    } catch (error) {
+      console.error("Failed to load composition:", error);
+    }
+  };
+
   if (loading) {
     return <div className="p-4 text-center">Loading...</div>;
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-[600px]">
       <h2 className="mb-4 text-2xl font-bold">Your Compositions</h2>
       {composition.length === 0 ? (
         <p className="text-center text-gray-500">No compositions saved yet</p>
@@ -60,7 +77,11 @@ const CompositionsList = () => {
                 </p>
               </div>
               <div className="flex space-x-2">
-                <Button variant="outline" onClick={() => {}} className="w-24">
+                <Button
+                  variant="outline"
+                  onClick={() => handleLoad(composition.id)}
+                  className="w-24"
+                >
                   Load
                 </Button>
                 <Button

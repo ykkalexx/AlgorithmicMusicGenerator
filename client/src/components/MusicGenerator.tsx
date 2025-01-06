@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { SynthType, MoodKey, MusicEvent } from "@/types/types";
+import { SynthType, MoodKey, MusicEvent, Composition } from "@/types/types";
 import { MOODS, INSTRUMENTS } from "@/constants/constants";
 import { MelodyGenerator } from "@/utils/melodyGenerator";
 import { saveComposition } from "@/services/api";
@@ -26,7 +26,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { exportToWave } from "@/utils/export";
 
-const MusicGenerator: React.FC = () => {
+interface Props {
+  loadedComposition: Composition | null;
+}
+
+const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
   const [mood, setMood] = useState<MoodKey>("happy");
   const [tempo, setTempo] = useState(120);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -53,6 +57,23 @@ const MusicGenerator: React.FC = () => {
   useEffect(() => {
     Tone.Transport.bpm.value = tempo;
   }, [tempo]);
+
+  // Add  to handle loaded composition
+  useEffect(() => {
+    if (loadedComposition) {
+      setMood(loadedComposition.mood as MoodKey);
+      setTempo(loadedComposition.tempo);
+      setSelectedInstrument(loadedComposition.instrument);
+      setCompositionName(loadedComposition.name);
+
+      // Parse melody data and create new sequence
+      const melodyData = JSON.parse(loadedComposition.melody);
+      const newSequence = generateMusicSequence(
+        loadedComposition.mood as MoodKey
+      );
+      setSequence(newSequence);
+    }
+  }, [loadedComposition]);
 
   const generateMusicSequence = (
     currentMood: MoodKey
