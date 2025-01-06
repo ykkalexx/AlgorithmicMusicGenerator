@@ -1,7 +1,6 @@
 ## Advanced Effects Chain:
 
 - Create and save custom effect chains (reverb, delay, distortion)
-- Share effect presets with other users
 - Backend stores preset configurations
 - Frontend provides visual effect chain builder
 
