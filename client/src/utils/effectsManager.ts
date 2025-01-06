@@ -105,30 +105,40 @@ export class EffectsManager {
       const parameters: { [key: string]: number } = {};
 
       switch (type) {
-        case "reverb":
-          parameters.decay = (effect as Tone.Reverb).decay.value;
-          parameters.preDelay = (effect as Tone.Reverb).preDelay.value;
-          parameters.wet = effect.wet.value;
+        case "reverb": {
+          const reverb = effect as Tone.Reverb;
+          parameters.decay = Number(reverb.decay);
+          parameters.preDelay = Number(reverb.preDelay);
+          parameters.wet = reverb.wet.value;
           break;
-        case "delay":
-          parameters.delayTime = (effect as Tone.FeedbackDelay).delayTime.value;
-          parameters.feedback = (effect as Tone.FeedbackDelay).feedback.value;
-          parameters.wet = effect.wet.value;
+        }
+        case "delay": {
+          const delay = effect as Tone.FeedbackDelay;
+          parameters.delayTime = Number(delay.delayTime);
+          parameters.feedback = Number(delay.feedback);
+          parameters.wet = delay.wet.value;
           break;
-        case "distortion":
-          parameters.distortion = (effect as Tone.Distortion).distortion;
-          parameters.wet = effect.wet.value;
+        }
+        case "distortion": {
+          const dist = effect as Tone.Distortion;
+          parameters.distortion = dist.distortion;
+          parameters.wet = dist.wet.value;
           break;
-        case "chorus":
-          parameters.frequency = (effect as Tone.Chorus).frequency.value;
-          parameters.depth = (effect as Tone.Chorus).depth.value;
-          parameters.wet = effect.wet.value;
+        }
+        case "chorus": {
+          const chorus = effect as Tone.Chorus;
+          parameters.frequency = Number(chorus.frequency);
+          parameters.depth = Number(chorus.depth);
+          parameters.wet = chorus.wet.value;
           break;
-        case "tremolo":
-          parameters.frequency = (effect as Tone.Tremolo).frequency.value;
-          parameters.depth = (effect as Tone.Tremolo).depth.value;
-          parameters.wet = effect.wet.value;
+        }
+        case "tremolo": {
+          const tremolo = effect as Tone.Tremolo;
+          parameters.frequency = Number(tremolo.frequency);
+          parameters.depth = Number(tremolo.depth);
+          parameters.wet = tremolo.wet.value;
           break;
+        }
       }
 
       settings.push({

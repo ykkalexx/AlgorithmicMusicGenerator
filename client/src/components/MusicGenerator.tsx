@@ -25,6 +25,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { exportToWave } from "@/utils/export";
+import { EffectsManager } from "@/utils/effectsManager";
+import { EffectType, EffectSettings } from "@/types/effects";
+import EffectsControl from "./EffectsControl";
 
 interface Props {
   loadedComposition: Composition | null;
@@ -40,6 +43,8 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [compositionName, setCompositionName] = useState("");
   const [exporting, isExporting] = useState(false);
+  const [effectsManager] = useState(() => new EffectsManager());
+  const [effects, setEffects] = useState<EffectSettings[]>([]);
 
   // Initialize synth when instrument changes
   useEffect(() => {
@@ -74,6 +79,22 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
       setSequence(newSequence);
     }
   }, [loadedComposition]);
+
+  // Initialize effects
+  useEffect(() => {
+    effectsManager.initialize();
+    setEffects(effectsManager.getCurrentSettings());
+  }, []);
+
+  // Connect synth to effects when created
+  useEffect(() => {
+    if (synth) {
+      const enabledEffects = effects
+        .filter((e) => e.enabled)
+        .map((e) => e.type);
+      effectsManager.connectSource(synth, enabledEffects);
+    }
+  }, [synth, effects]);
 
   const generateMusicSequence = (
     currentMood: MoodKey
@@ -184,104 +205,140 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
     }
   };
 
+  const handleEffectToggle = (type: EffectType) => {
+    setEffects((prevEffects) =>
+      prevEffects.map((effect) =>
+        effect.type === type ? { ...effect, enabled: !effect.enabled } : effect
+      )
+    );
+  };
+
+  const handleEffectParamterChange = (
+    type: EffectType,
+    parameter: string,
+    value: number
+  ) => {
+    effectsManager.updateEffect(type, { [parameter]: value });
+    setEffects((prevEffects) =>
+      prevEffects.map((effect) =>
+        effect.type === type
+          ? {
+              ...effect,
+              parameter: { ...effect.parameters, [parameter]: value },
+            }
+          : effect
+      )
+    );
+  };
+
   return (
-    <Card className="w-full max-w-2xl p-6 mx-auto mt-8">
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Mood</label>
-          <Select value={mood} onValueChange={handleMoodChange}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select mood" />
-            </SelectTrigger>
-            <SelectContent>
-              {MOODS.map((m) => (
-                <SelectItem key={m.value} value={m.value}>
-                  {m.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="flex flex-col items-start">
+      <Card className="w-full max-w-2xl p-6 mx-auto mt-8">
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Mood</label>
+            <Select value={mood} onValueChange={handleMoodChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select mood" />
+              </SelectTrigger>
+              <SelectContent>
+                {MOODS.map((m) => (
+                  <SelectItem key={m.value} value={m.value}>
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Instrument</label>
-          <Select
-            value={selectedInstrument}
-            onValueChange={handleInstrumentChange}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select instrument" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(INSTRUMENTS).map(([value, inst]) => (
-                <SelectItem key={value} value={value}>
-                  {inst.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Instrument</label>
+            <Select
+              value={selectedInstrument}
+              onValueChange={handleInstrumentChange}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select instrument" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(INSTRUMENTS).map(([value, inst]) => (
+                  <SelectItem key={value} value={value}>
+                    {inst.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Tempo: {tempo} BPM</label>
-          <Slider
-            value={[tempo]}
-            onValueChange={handleTempoChange}
-            min={60}
-            max={200}
-            step={1}
-            className="w-full"
-          />
-        </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Tempo: {tempo} BPM</label>
+            <Slider
+              value={[tempo]}
+              onValueChange={handleTempoChange}
+              min={60}
+              max={200}
+              step={1}
+              className="w-full"
+            />
+          </div>
 
-        <div className="flex space-x-4">
-          <Button
-            onClick={handlePlay}
-            className={`w-32 ${
-              isPlaying
-                ? "bg-red-500 hover:bg-red-600"
-                : "bg-green-500 hover:bg-green-600"
-            }`}
-          >
-            {isPlaying ? "Stop" : "Play"}
-          </Button>
+          <div className="flex space-x-4">
+            <Button
+              onClick={handlePlay}
+              className={`w-32 ${
+                isPlaying
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-green-500 hover:bg-green-600"
+              }`}
+            >
+              {isPlaying ? "Stop" : "Play"}
+            </Button>
 
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button onClick={() => setShowSaveDialog(true)} className="w-32">
-                Save
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Save Composition</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Composition name"
-                  value={compositionName}
-                  //@ts-ignore
-                  onChange={(e: string) => setCompositionName(e.target.value)}
-                />
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowSaveDialog(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button onClick={handleSave}>Save</Button>
-                </DialogFooter>
-              </div>
-            </DialogContent>
-          </Dialog>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  onClick={() => setShowSaveDialog(true)}
+                  className="w-32"
+                >
+                  Save
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Save Composition</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <Input
+                    placeholder="Composition name"
+                    value={compositionName}
+                    //@ts-ignore
+                    onChange={(e: string) => setCompositionName(e.target.value)}
+                  />
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowSaveDialog(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSave}>Save</Button>
+                  </DialogFooter>
+                </div>
+              </DialogContent>
+            </Dialog>
 
-          <Button onClick={handleExport} className="w-32">
-            {exporting ? "Exporting..." : "Export"}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+            <Button onClick={handleExport} className="w-32">
+              {exporting ? "Exporting..." : "Export"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <EffectsControl
+        effects={effects}
+        onEffectToggle={handleEffectToggle}
+        onParameterChange={handleEffectParamterChange}
+      />
+    </div>
   );
 };
 

@@ -6,8 +6,8 @@ import { Label } from "@/components/ui/label";
 import { EffectType, EffectSettings } from "@/types/effects";
 
 interface EffectControlProps {
-  effect: EffectSettings;
-  onToggle: (type: EffectType) => void;
+  effects: EffectSettings[];
+  onEffectToggle: (type: EffectType) => void;
   onParameterChange: (type: EffectType, key: string, value: number) => void;
 }
 
@@ -23,10 +23,12 @@ const parameterLabels: Record<string, string> = {
 };
 
 const EffectsControl: React.FC<EffectControlProps> = ({
-  effect,
-  onToggle,
+  effects,
+  onEffectToggle,
   onParameterChange,
 }) => {
+  if (!effects || effects.length === 0) return null;
+
   const getParameterRange = (
     parameter: string
   ): { min: number; max: number; step: number } => {
@@ -53,41 +55,42 @@ const EffectsControl: React.FC<EffectControlProps> = ({
   };
 
   return (
-    <Card className="w-full mb-4">
-      <CardContent className="pt-6">
-        <div className="flex items-center justify-between mb-4">
-          <Label className="text-lg font-medium capitalize">
-            {effect.type}
-          </Label>
-          <Switch
-            checked={effect.enabled}
-            onCheckedChange={() => onToggle(effect.type)}
-          />
-        </div>
-
-        <div className="space-y-4">
-          {Object.entries(effect.parameters).map(([parameter, value]) => (
-            <div key={parameter} className="space-y-2">
-              <div className="flex justify-between">
-                <Label className="text-sm">{parameterLabels[parameter]}</Label>
-                <span className="text-sm text-gray-500">
-                  {value.toFixed(2)}
-                </span>
-              </div>
-              <Slider
-                value={[value]}
-                onValueChange={([newValue]) =>
-                  onParameterChange(effect.type, parameter, newValue)
-                }
-                {...getParameterRange(parameter)}
-                disabled={!effect.enabled}
-                className="w-full"
+    <div className="mt-4 space-y-4">
+      {effects.map((effect) => (
+        <Card key={effect.type}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <Label>{effect.type}</Label>
+              <Switch
+                checked={effect.enabled}
+                onCheckedChange={() => onEffectToggle(effect.type)}
               />
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            {Object.entries(effect.parameters || {}).map(([param, value]) => {
+              const range = getParameterRange(param);
+              return (
+                <div key={param} className="space-y-2">
+                  <div className="flex justify-between">
+                    <Label>{parameterLabels[param]}</Label>
+                    <span>{value.toFixed(2)}</span>
+                  </div>
+                  <Slider
+                    value={[value]}
+                    onValueChange={([newValue]) =>
+                      onParameterChange(effect.type, param, newValue)
+                    }
+                    min={range.min}
+                    max={range.max}
+                    step={range.step}
+                    disabled={!effect.enabled}
+                  />
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 };
 
