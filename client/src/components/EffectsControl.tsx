@@ -66,16 +66,20 @@ const EffectsControl: React.FC<EffectControlProps> = ({
                 onCheckedChange={() => onEffectToggle(effect.type)}
               />
             </div>
-            {Object.entries(effect.parameters || {}).map(([param, value]) => {
+            {Object.entries(effect.parameters).map(([param, value]) => {
               const range = getParameterRange(param);
+              const numValue =
+                typeof value === "number" ? value : Number(value);
               return (
                 <div key={param} className="space-y-2">
                   <div className="flex justify-between">
                     <Label>{parameterLabels[param]}</Label>
-                    <span>{value.toFixed(2)}</span>
+                    <span>
+                      {!isNaN(numValue) ? numValue.toFixed(2) : "0.00"}
+                    </span>
                   </div>
                   <Slider
-                    value={[value]}
+                    value={[!isNaN(numValue) ? numValue : 0]}
                     onValueChange={([newValue]) =>
                       onParameterChange(effect.type, param, newValue)
                     }

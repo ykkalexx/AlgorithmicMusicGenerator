@@ -213,19 +213,23 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
     );
   };
 
-  const handleEffectParamterChange = (
+  const handleEffectParameterChange = (
     type: EffectType,
     parameter: string,
     value: number
   ) => {
     effectsManager.updateEffect(type, { [parameter]: value });
+
     setEffects((prevEffects) =>
       prevEffects.map((effect) =>
         effect.type === type
-          ? {
+          ? ({
               ...effect,
-              parameter: { ...effect.parameters, [parameter]: value },
-            }
+              parameters: {
+                ...effect.parameters,
+                [parameter]: value,
+              },
+            } as EffectSettings)
           : effect
       )
     );
@@ -336,7 +340,7 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
       <EffectsControl
         effects={effects}
         onEffectToggle={handleEffectToggle}
-        onParameterChange={handleEffectParamterChange}
+        onParameterChange={handleEffectParameterChange}
       />
     </div>
   );
