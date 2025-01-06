@@ -236,7 +236,7 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
   };
 
   return (
-    <div className="flex flex-col items-start">
+    <div className="flex flex-row items-baseline justify-between gap-10">
       <Card className="w-full max-w-2xl p-6 mx-auto mt-8">
         <CardContent className="space-y-6">
           <div className="space-y-2">
