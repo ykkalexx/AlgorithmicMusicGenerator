@@ -1,7 +1,7 @@
 ## Advanced Effects Chain:
 
-- Create and save custom effect chains (reverb, delay, distortion)
-- Backend stores preset configurations
+- Create and save custom effect chains (reverb, delay, distortion) ✓
+- Backend stores preset configurations ✓
 - Frontend provides visual effect chain builder
 
 ## Playlists and Collections:
