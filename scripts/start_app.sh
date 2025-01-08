@@ -12,4 +12,4 @@ echo -e "${GREENGREEN}Starting the client...${NC}"
 cd ../client
 npm run dev
 
-echo -e "${GREENGREEN}Everything is ready UwU${NC}"
+echo -e "${GREENGREEN}Everything is ready meow${NC}"
