@@ -235,6 +235,15 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
     );
   };
 
+  const handleLoadPreset = (effects: EffectSettings[]) => {
+    setEffects(effects);
+    effects.forEach((effect) => {
+      if (effect.enabled) {
+        effectsManager.updateEffect(effect.type, effect.parameters);
+      }
+    });
+  };
+
   return (
     <div className="flex flex-row items-baseline justify-between gap-10">
       <Card className="w-full max-w-2xl p-6 mx-auto mt-8">
@@ -341,6 +350,7 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
         effects={effects}
         onEffectToggle={handleEffectToggle}
         onParameterChange={handleEffectParameterChange}
+        onLoadPreset={handleLoadPreset}
       />
     </div>
   );
