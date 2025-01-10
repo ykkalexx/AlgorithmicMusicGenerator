@@ -29,7 +29,8 @@ React.js with TypeScript for seamless UI/UX.
 Tone.js for audio synthesis and sound generation.
 Tailwind CSS for modern, responsive styling.
 
-#### Backend
+#### Backend
+
 Node.js with Express.js for API logic.
 TypeScript for type-safe backend development.
 MySQL as the database to store compositions and presets.
