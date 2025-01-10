@@ -112,9 +112,14 @@ const EffectsControl: React.FC<EffectControlProps> = ({
             </SelectTrigger>
             <SelectContent>
               {presets.map((preset) => (
-                <SelectItem key={preset.id} value={preset.id.toString()}>
-                  {preset.name}
-                </SelectItem>
+                <div className="flex flex-row items-start gap-4">
+                  <SelectItem key={preset.id} value={preset.id.toString()}>
+                    {preset.name}
+                  </SelectItem>
+                  <Button onClick={() => handleDeletePreset(preset.id)}>
+                    Delete Preset
+                  </Button>
+                </div>
               ))}
             </SelectContent>
           </Select>
