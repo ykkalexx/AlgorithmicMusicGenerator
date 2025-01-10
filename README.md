@@ -36,7 +36,7 @@ MySQL as the database to store compositions and presets.
 
 ### Environment File
 
-```http
+```
 ### Backend
 
 PORT=3000
@@ -57,7 +57,7 @@ BACKEND_SERVER=http://localhost:3000/api
 - Clone the repository:
 
 ```bash
-git clone https://github.com/your-repo.git
+git clone https://github.com/ykkalexx/AlgorithmicMusicGenerator.git
 ```
 
 - Install dependencies for both frontend and backend:
