@@ -28,6 +28,7 @@ import { exportToWave } from "@/utils/export";
 import { EffectsManager } from "@/utils/effectsManager";
 import { EffectType, EffectSettings } from "@/types/effects";
 import EffectsControl from "./EffectsControl";
+import { MagentaService } from "@/services/MagentaService";
 
 interface Props {
   loadedComposition: Composition | null;
@@ -45,6 +46,8 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
   const [exporting, isExporting] = useState(false);
   const [effectsManager] = useState(() => new EffectsManager());
   const [effects, setEffects] = useState<EffectSettings[]>([]);
+  const [generationType, setGenerationType] = useState<"basic" | "ai">("basic");
+  const [magentaService] = useState(() => new MagentaService());
 
   // Initialize synth when instrument changes
   useEffect(() => {
@@ -63,21 +66,25 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
     Tone.Transport.bpm.value = tempo;
   }, [tempo]);
 
-  // Add  to handle loaded composition
+  // Add to handle loaded composition
   useEffect(() => {
-    if (loadedComposition) {
-      setMood(loadedComposition.mood as MoodKey);
-      setTempo(loadedComposition.tempo);
-      setSelectedInstrument(loadedComposition.instrument);
-      setCompositionName(loadedComposition.name);
+    const loadComposition = async () => {
+      if (loadedComposition) {
+        setMood(loadedComposition.mood as MoodKey);
+        setTempo(loadedComposition.tempo);
+        setSelectedInstrument(loadedComposition.instrument);
+        setCompositionName(loadedComposition.name);
 
-      // Parse melody data and create new sequence
-      const melodyData = JSON.parse(loadedComposition.melody);
-      const newSequence = generateMusicSequence(
-        loadedComposition.mood as MoodKey
-      );
-      setSequence(newSequence);
-    }
+        // Parse melody data and create new sequence
+        const melodyData = JSON.parse(loadedComposition.melody);
+        const newSequence = await generateMusicSequence(
+          loadedComposition.mood as MoodKey
+        );
+        setSequence(newSequence);
+      }
+    };
+
+    loadComposition();
   }, [loadedComposition]);
 
   // Initialize effects
@@ -96,18 +103,33 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
     }
   }, [synth, effects]);
 
-  const generateMusicSequence = (
-    currentMood: MoodKey
-  ): Tone.Part<MusicEvent> => {
+  // Initialize magenta service
+  useEffect(() => {
+    const initMagenta = async () => {
+      try {
+        await magentaService.initialize();
+      } catch (error) {
+        console.error("Failed to initialize Magenta:", error);
+      }
+    };
+    initMagenta();
+    return () => magentaService.dispose();
+  }, []);
+
+  // prettier-ignore
+  const generateMusicSequence = async (currentMood: MoodKey): Promise<Tone.Part<MusicEvent>> => {
     if (sequence) {
       sequence.dispose();
     }
 
-    // Create melody generator instance
-    const generator = new MelodyGenerator(currentMood);
+    let events: MusicEvent[];
 
-    // Generate melody events using the class
-    const events = generator.generateMelody();
+    if (generationType === 'ai') {
+      events = await magentaService.generateMelody(currentMood);
+    } else {
+      const generator = new MelodyGenerator(currentMood);
+      events = generator.generateMelody();
+    }
 
     const melodyPart = new Tone.Part((time: number, event: MusicEvent) => {
       if (!synth?.triggerAttackRelease) return;
@@ -137,13 +159,18 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
     setSequence(melodyPart);
     return melodyPart;
   };
+
   const handlePlay = async () => {
     await Tone.start();
 
     if (!isPlaying) {
-      const newSequence = generateMusicSequence(mood);
-      Tone.Transport.start();
-      newSequence.start(0);
+      try {
+        const newSequence = await generateMusicSequence(mood);
+        Tone.Transport.start();
+        newSequence.start(0);
+      } catch (error) {
+        console.error("Failed to generate sequence:", error);
+      }
     } else {
       Tone.Transport.stop();
       sequence?.stop();
@@ -305,6 +332,21 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
               }`}
             >
               {isPlaying ? "Stop" : "Play"}
+            </Button>
+
+            <Button
+              variant={generationType === "basic" ? "default" : "outline"}
+              onClick={() => setGenerationType("basic")}
+              className="w-32"
+            >
+              Basic
+            </Button>
+            <Button
+              variant={generationType === "ai" ? "default" : "outline"}
+              onClick={() => setGenerationType("ai")}
+              className="w-32"
+            >
+              AI Generated
             </Button>
 
             <Dialog>
