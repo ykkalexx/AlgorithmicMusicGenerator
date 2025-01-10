@@ -12,8 +12,17 @@ export interface Mood {
   value: MoodKey;
   label: string;
   scale: string[];
+  tempo: {
+    min: number;
+    max: number;
+  };
+  velocity: {
+    min: number;
+    max: number;
+  };
+  chordProgressions: number[][];
+  rhythmPatterns: string[][];
 }
-
 export interface InstrumentConfig {
   name: string;
   create: () => SynthType;
@@ -67,3 +76,21 @@ export interface SaveCompositionDto {
   instrument: string;
   melody: string;
 }
+
+export interface MoodConfig {
+  scale: string[];
+  tempo: {
+    min: number;
+    max: number;
+  };
+  velocity: {
+    min: number;
+    max: number;
+  };
+  chordProgressions: number[][];
+  rhythmPatterns: string[][];
+}
+
+export type MoodConfigs = {
+  [key in MoodKey]: MoodConfig;
+};
