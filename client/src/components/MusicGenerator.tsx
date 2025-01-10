@@ -28,7 +28,6 @@ import { exportToWave } from "@/utils/export";
 import { EffectsManager } from "@/utils/effectsManager";
 import { EffectType, EffectSettings } from "@/types/effects";
 import EffectsControl from "./EffectsControl";
-import { MagentaService } from "@/services/MagentaService";
 
 interface Props {
   loadedComposition: Composition | null;
@@ -46,8 +45,6 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
   const [exporting, isExporting] = useState(false);
   const [effectsManager] = useState(() => new EffectsManager());
   const [effects, setEffects] = useState<EffectSettings[]>([]);
-  const [generationType, setGenerationType] = useState<"basic" | "ai">("basic");
-  const [magentaService] = useState(() => new MagentaService());
 
   // Initialize synth when instrument changes
   useEffect(() => {
@@ -103,37 +100,18 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
     }
   }, [synth, effects]);
 
-  // Initialize magenta service
-  useEffect(() => {
-    const initMagenta = async () => {
-      try {
-        await magentaService.initialize();
-      } catch (error) {
-        console.error("Failed to initialize Magenta:", error);
-      }
-    };
-    initMagenta();
-    return () => magentaService.dispose();
-  }, []);
-
   // prettier-ignore
-  const generateMusicSequence = async (currentMood: MoodKey): Promise<Tone.Part<MusicEvent>> => {
+  const generateMusicSequence = (currentMood: MoodKey): Tone.Part<MusicEvent> => {
     if (sequence) {
       sequence.dispose();
     }
-
-    let events: MusicEvent[];
-
-    if (generationType === 'ai') {
-      events = await magentaService.generateMelody(currentMood);
-    } else {
-      const generator = new MelodyGenerator(currentMood);
-      events = generator.generateMelody();
-    }
-
+  
+    const generator = new MelodyGenerator(currentMood);
+    const events = generator.generateMelody();
+  
     const melodyPart = new Tone.Part((time: number, event: MusicEvent) => {
       if (!synth?.triggerAttackRelease) return;
-
+  
       if (Array.isArray(event.note)) {
         event.note.forEach((note) => {
           synth.triggerAttackRelease(
@@ -152,10 +130,10 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
         );
       }
     }, events).start(0);
-
+  
     melodyPart.loop = true;
     melodyPart.loopEnd = "2m";
-
+  
     setSequence(melodyPart);
     return melodyPart;
   };
@@ -332,21 +310,6 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
               }`}
             >
               {isPlaying ? "Stop" : "Play"}
-            </Button>
-
-            <Button
-              variant={generationType === "basic" ? "default" : "outline"}
-              onClick={() => setGenerationType("basic")}
-              className="w-32"
-            >
-              Basic
-            </Button>
-            <Button
-              variant={generationType === "ai" ? "default" : "outline"}
-              onClick={() => setGenerationType("ai")}
-              className="w-32"
-            >
-              AI Generated
             </Button>
 
             <Dialog>

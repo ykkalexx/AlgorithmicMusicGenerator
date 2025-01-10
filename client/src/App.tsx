@@ -7,6 +7,7 @@ import { Composition } from "./types/types";
 function App() {
   const [loadedComposition, setLoadedComposition] =
     useState<Composition | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleLoadComposition = (composition: Composition) => {
     setLoadedComposition(composition);
