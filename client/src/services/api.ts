@@ -107,3 +107,39 @@ export async function deletePreset(id: number): Promise<void> {
     throw new Error("Failed to delete preset");
   }
 }
+
+export async function saveCompositionVersion(
+  compositionId: number,
+  changes: Partial<SaveCompositionDto>
+): Promise<void> {
+  const response = await fetch(
+    `${API_URL}/compositions/${compositionId}/versions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(changes),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to save version");
+  }
+}
+
+export async function fetchVersionHistory(compositionId: number) {
+  const response = await fetch(
+    `${API_URL}/compositions/${compositionId}/versions`,
+    {
+      credentials: "include",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch version history");
+  }
+
+  return response.json();
+}
