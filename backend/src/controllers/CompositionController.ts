@@ -125,4 +125,65 @@ export class CompositionControllers {
       next(error);
     }
   }
+
+  // this function is used to save the version of the composition
+  async saveVersion(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { compositionId } = req.params;
+      const changes = req.body;
+      const sessionId = req.cookies.sessionId;
+
+      // get user
+      const [users] = await dbConnection.execute<User[]>(
+        "SELECT * FROM users WHERE session_id = ?",
+        [sessionId]
+      );
+
+      if (users.length === 0) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Get latest version
+      const [versions] = await dbConnection.execute(
+        "SELECT MAX(version) as latest FROM composition_versions WHERE composition_id = ?",
+        [compositionId]
+      );
+      //@ts-ignore
+      const nextVersion = (versions[0]?.latest || 0) + 1;
+
+      //save new version
+      await dbConnection.execute(
+        `INSERT INTO composition_versions 
+        (composition_id, version, changes, created_by) 
+        VALUES (?, ?, ?, ?)`,
+        [compositionId, nextVersion, JSON.stringify(changes), users[0].id]
+      );
+
+      res.status(201).json({ message: "Version saved successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // get the version history of the composition
+  async getVersionHistory(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { compositionId } = req.params;
+      const sessionId = req.cookies.sessionId;
+
+      const [versions] = await dbConnection.execute(
+        `SELECT cv.* 
+         FROM composition_versions cv
+         JOIN compositions c ON cv.composition_id = c.id
+         JOIN users u ON c.user_id = u.id
+         WHERE c.id = ? AND u.session_id = ?
+         ORDER BY cv.version DESC`,
+        [compositionId, sessionId]
+      );
+
+      res.json({ versions });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

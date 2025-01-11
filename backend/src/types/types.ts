@@ -29,3 +29,17 @@ export interface SaveCompositionDto {
   instrument: string;
   melody: string;
 }
+
+export interface CompositionVersion {
+  id: number;
+  compositionId: number;
+  version: number;
+  changes: {
+    mood?: string;
+    tempo?: number;
+    instrument?: string;
+    melody?: string;
+  };
+  createdAt: Date;
+  createdBy: string;
+}

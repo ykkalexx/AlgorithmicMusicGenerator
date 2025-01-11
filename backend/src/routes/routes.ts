@@ -11,6 +11,11 @@ router.post("/compositions", compositionController.saveComposition);
 router.get("/compositions", compositionController.getUserCompositions);
 router.get("/compositions/:id", compositionController.getComposition);
 router.delete("/compositions/:id", compositionController.deleteComposition);
+router.post("/compositions/:id/versions", compositionController.saveVersion);
+router.get(
+  "/compositions/:id/versions",
+  compositionController.getVersionHistory
+);
 
 // Effects presets routes
 router.post("/effect-presets", effectPresetsController.savePreset);
