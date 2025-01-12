@@ -7,6 +7,8 @@ import {
   getUserCompositions,
 } from "@/services/api";
 import { Composition } from "@/types/types";
+import { fetchVersionHistory } from "@/services/api";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 
 interface Props {
   onLoad: (composition: Composition) => void;
@@ -15,6 +17,10 @@ interface Props {
 const CompositionsList = ({ onLoad }: Props) => {
   const [composition, setComposition] = useState<Composition[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedComposition, setSelectedComposition] =
+    useState<Composition | null>(null);
+  const [versions, setVersions] = useState<Composition[]>([]);
+  const [showVersions, setShowVersions] = useState(false);
 
   useEffect(() => {
     loadCompositions();
@@ -53,6 +59,18 @@ const CompositionsList = ({ onLoad }: Props) => {
     return <div className="p-4 text-center">Loading...</div>;
   }
 
+  const handleVersionClick = async (compositionId: number) => {
+    try {
+      const history = await fetchVersionHistory(compositionId);
+      setVersions(history.versions);
+      //@ts-ignore
+      setSelectedComposition(compositionId);
+      setShowVersions(true);
+    } catch (error) {
+      console.error("Failed to fetch versions:", error);
+    }
+  };
+
   return (
     <div className="space-y-4 w-[600px]">
       <h2 className="mb-4 text-2xl font-bold">Your Compositions</h2>
@@ -79,6 +97,13 @@ const CompositionsList = ({ onLoad }: Props) => {
               <div className="flex space-x-2">
                 <Button
                   variant="outline"
+                  onClick={() => handleVersionClick(composition.id)}
+                  className="w-24"
+                >
+                  Versions
+                </Button>
+                <Button
+                  variant="outline"
                   onClick={() => handleLoad(composition.id)}
                   className="w-24"
                 >
@@ -96,6 +121,44 @@ const CompositionsList = ({ onLoad }: Props) => {
           </Card>
         ))
       )}
+
+      <Dialog open={showVersions} onOpenChange={setShowVersions}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Version History</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {versions.map((version) => (
+              <Card key={version.id}>
+                <CardContent className="p-4">
+                  <div className="flex justify-between">
+                    <div>
+                      <h3>Version {version.version}</h3>
+                      <p className="text-sm text-gray-500">
+                        {new Date(version.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        onLoad({
+                          ...composition.find(
+                            //@ts-ignore
+                            (c) => c.id === selectedComposition
+                          )!,
+                        });
+                        setShowVersions(false);
+                      }}
+                    >
+                      Load Version
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

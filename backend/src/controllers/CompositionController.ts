@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { dbConnection } from "../config/database";
 import { Composition, SaveCompositionDto, User } from "../types/types";
+import { ResultSetHeader } from "mysql2";
 
 export class CompositionControllers {
   // saving the session in the database and cookies rather than auth system
@@ -30,7 +31,7 @@ export class CompositionControllers {
       }
 
       // save composition
-      const [result] = await dbConnection.execute(
+      const [result] = await dbConnection.execute<ResultSetHeader>(
         `INSERT INTO compositions 
         (user_id, name, mood, tempo, instrument, melody) 
         VALUES (?, ?, ?, ?, ?, ?)`,
@@ -41,6 +42,23 @@ export class CompositionControllers {
           composition.tempo,
           composition.instrument,
           JSON.stringify(composition.melody),
+        ]
+      );
+
+      // save initial version to composition_versions
+      const [versions] = await dbConnection.execute(
+        `INSERT INTO composition_versions (composition_id, version, changes, created_by) VALUES (?, ?, ?, ?)`,
+        [
+          result.insertId,
+          1,
+          JSON.stringify({
+            name: composition.name,
+            mood: composition.mood,
+            tempo: composition.tempo,
+            instrument: composition.instrument,
+            melody: composition.melody,
+          }),
+          userId,
         ]
       );
 

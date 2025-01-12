@@ -136,7 +136,7 @@ export async function fetchVersionHistory(compositionId: number) {
       credentials: "include",
     }
   );
-
+  console.log(response);
   if (!response.ok) {
     throw new Error("Failed to fetch version history");
   }

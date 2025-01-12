@@ -28,6 +28,7 @@ import { exportToWave } from "@/utils/export";
 import { EffectsManager } from "@/utils/effectsManager";
 import { EffectType, EffectSettings } from "@/types/effects";
 import EffectsControl from "./EffectsControl";
+import { saveCompositionVersion } from "@/services/api";
 
 interface Props {
   loadedComposition: Composition | null;
@@ -185,6 +186,15 @@ const MusicGenerator: React.FC<Props> = ({ loadedComposition }) => {
         instrument: selectedInstrument,
         melody: sequence ? JSON.stringify(event) : "",
       });
+      if (loadedComposition) {
+        await saveCompositionVersion(loadedComposition.id, {
+          name: compositionName,
+          mood: mood,
+          tempo: tempo,
+          instrument: selectedInstrument,
+          melody: sequence ? JSON.stringify(event) : "",
+        });
+      }
       setShowSaveDialog(false);
       setCompositionName("");
       // Optional: Show success message

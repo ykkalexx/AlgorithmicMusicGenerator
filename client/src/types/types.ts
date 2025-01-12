@@ -55,6 +55,7 @@ export interface Composition {
   tempo: number;
   instrument: string;
   melody: string;
+  version: number;
   createdAt: Date;
   updatedAt: Date;
 }
